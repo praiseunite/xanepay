@@ -15,6 +15,9 @@
 1. [The Core Principle — XanePay Controls Its Own Books](#1-the-core-principle)
 2. [Non-Custody Model — What the Ledger Actually Represents](#2-non-custody-model)
 3. [The Two Treasury Layers](#3-the-two-treasury-layers)
+   - 3.1 Fiat Treasury (NGN)
+   - 3.2 Crypto Treasury (ETH / USDT)
+   - 3.3 NGN Treasury — Three Realistic Control Models
 4. [Ledger Accounts — Full Definitions](#4-ledger-accounts--full-definitions)
 5. [Execution Paths — Provider vs. Treasury](#5-execution-paths)
 6. [New Architecture — Treasury Control Layer](#6-treasury-control-layer-architecture)
@@ -147,6 +150,165 @@ Both are reflected in the internal ledger. Both are controlled entirely by XaneP
 │  Controlled By: XanePay (key custody)                │
 └──────────────────────────────────────────────────────┘
 ```
+
+---
+
+### 3.3 NGN Treasury — Three Realistic Control Models
+
+> [!IMPORTANT]
+> This section is critical. "XanePay controls its NGN treasury" does not mean
+> the same thing in all situations. The level of control depends entirely on
+> XanePay's company structure and banking relationships.
+> **This is an alternative model decision — not a software decision.**
+
+Because NGN is a regulated fiat currency, it must always physically sit with
+a licensed third party (a bank or PSP). The question is: **which third party,
+and how much control does XanePay retain over it?**
+
+The three models below are alternatives. XanePay must choose one before build.
+
+---
+
+#### Model A — PSP Balance as Treasury *(MVP / Current Reality)*
+
+```
+How it works:
+  User pays ₦500,000 via Paystack
+      │
+      ▼
+  Paystack receives and holds the NGN
+      │
+      ▼
+  XanePay's PAYSTACK DASHBOARD shows +₦500,000
+  (This is a credit on Paystack's platform — not XanePay's bank)
+      │
+      ▼
+  For offramp payout: XanePay calls Paystack Transfer API
+  Paystack executes the bank transfer on XanePay's behalf
+
+Controlled by XanePay:
+  ✅  Internal ledger (XanePay's own Postgres DB — fully independent)
+  ✅  Who gets paid (XanePay initiates transfers via API key)
+  ✅  When payment is initiated
+  ⚠️  Physical NGN (sits at Paystack — Paystack is still the custodian)
+  ⚠️  Paystack's platform is still the truth for the NGN balance
+
+Risk:
+  - Paystack can freeze the account
+  - Paystack settling delays affect payout liquidity
+  - XanePay's NGN position is only as reliable as Paystack's uptime
+
+Requires:
+  - Paystack business account (already exists for most startups)
+  - No bank account needed
+  - No additional setup beyond existing PSP relationship
+
+Best for: MVP — before company is registered / bank account opened
+```
+
+---
+
+#### Model B — Corporate Bank Account *(Full Control — Recommended)*
+
+```
+How it works:
+  User pays ₦500,000 via Paystack
+      │
+      ▼
+  Paystack collects (collection agent only)
+      │  Paystack settles to XanePay's bank account (T+0 / T+1 / T+2)
+      ▼
+  XanePay's GTBank / Access / Zenith corporate account
+  (XanePay is the account holder — true ownership)
+      │
+      ▼
+  For offramp payout: XanePay initiates bank transfer
+  directly from their bank (via bank API or PSP Transfers)
+
+Controlled by XanePay:
+  ✅  Internal ledger
+  ✅  Physical NGN (it's in XanePay's own bank account)
+  ✅  Initiating transfers (bank API or Paystack used as transfer tool only)
+  ✅  Independence from Paystack — if Paystack is down, NGN is safe in bank
+  ✅  No single PSP can freeze XanePay's operating capital
+
+Risk:
+  - Settlement lag: Paystack typically settles T+1
+    (NGN available next business day, not instantly)
+  - Bank account can be frozen by bank or regulator
+    (but this requires a formal legal order — harder than PSP freeze)
+
+Requires:
+  - CAC-registered Nigerian company
+  - Corporate bank account (GTBank, Access, UBA, Zenith, Sterling, etc.)
+  - Commercial agreement with Paystack to settle to that bank account
+  - Settlement schedule configured (daily, real-time, or per-batch)
+
+Best for: Post-registration, production operations
+```
+
+---
+
+#### Model C — Banking-as-a-Service (BaaS) *(Practical Middle Ground)*
+
+```
+How it works:
+  XanePay opens virtual bank accounts via a BaaS provider:
+    - Anchor (anchor.co)
+    - Bloc (blochq.io)
+    - Bankly
+    - Mono
+
+  Each user or flow gets a dedicated virtual account number
+  (real NIP/NIBSS account — money goes directly into XanePay's
+   virtual account, not into Paystack's pool)
+      │
+      ▼
+  NGN lands in XanePay's virtual sub-account (API-managed)
+      │
+      ▼
+  XanePay initiates transfers via BaaS provider's API
+
+Controlled by XanePay:
+  ✅  Internal ledger
+  ✅  NGN in dedicated virtual accounts (not pooled with other businesses)
+  ✅  Transfer initiation via API
+  ✅  No Paystack balance dependency
+  ⚠️  BaaS provider is still the underlying custodian
+      (but dedicated accounts = more control than a shared PSP pool)
+
+Risk:
+  - BaaS provider can freeze or suspend accounts
+  - Newer providers — due diligence on financial stability required
+
+Requires:
+  - CAC registration (required by all BaaS providers)
+  - Compliance onboarding with BaaS provider (KYB process)
+  - Integration with BaaS provider's API (instead of or alongside Paystack)
+
+Best for: Startups past registration stage wanting more control
+          before setting up a full bank relationship
+```
+
+---
+
+#### Summary Comparison
+
+| Factor | Model A: PSP Balance | Model B: Corporate Bank | Model C: BaaS |
+|---|---|---|---|
+| NGN ownership | Paystack holds it | XanePay's own bank | BaaS provider holds it |
+| Control level | Partial ⚠️ | Full ✅ | Good ✅ |
+| Freeze risk | PSP decision alone | Legal order required | BaaS decision |
+| Setup required | None | CAC + bank account | CAC + KYB onboarding |
+| Settlement speed | T+1 (Paystack schedule) | Configurable | Near real-time |
+| Recommended phase | MVP only | Production | Pre-bank transition |
+| Ledger independence | ✅ Always — regardless of model chosen |
+
+> [!NOTE]
+> **The internal ledger is fully XanePay-controlled in ALL three models.**
+> XanePay's Postgres database is the master truth for every user obligation
+> regardless of where the physical NGN sits. What changes between models is
+> the level of control over the physical movement of NGN — not the accounting.
 
 ---
 
@@ -612,14 +774,15 @@ async function route(transaction: Transaction): Promise<ExecutionPlan> {
 
 | # | Question | Who Decides | Impact |
 |---|---|---|---|
-| 1 | **What wallet custody solution?** Fireblocks, BitGo, or self-managed? | XanePay founders + engineering | Determines Phase 0.5 architecture entirely |
-| 2 | **Which bank holds the NGN settlement account?** What is the sweep mechanism from Paystack/Monnify? | XanePay commercial team | Required for fiat treasury to function |
-| 3 | **What is the initial treasury capitalisation?** How much ETH and NGN will XanePay pre-fund at launch? | XanePay finance | Determines replenishment thresholds and Treasury Path availability at launch |
-| 4 | **What is the Treasury Path transaction size limit?** Above what ETH amount does the system always use Provider Path? | XanePay risk team | Routing Engine configuration |
-| 5 | **Does XanePay hold crypto on behalf of users?** Or does crypto always go immediately to the user's external wallet? | XanePay product team | Determines whether `User ETH Wallet` ledger account is needed |
-| 6 | **Which blockchain(s)?** ETH mainnet only, or also Polygon/Base for lower gas? | XanePay product + engineering | On-chain monitoring infrastructure, gas management |
-| 7 | **Who has authority to trigger manual replenishment?** What approval is required for large treasury buys? | XanePay operations | Admin API access controls |
-| 8 | **Regulatory position:** Has legal counsel reviewed holding crypto as operating inventory in this jurisdiction? | XanePay legal | May affect treasury limits and disclosure requirements |
+| 1 | **Which NGN Treasury Model?** PSP Balance (Model A), Corporate Bank (Model B), or BaaS (Model C)? See Section 3.3. | XanePay founders + legal | Changes the entire fiat treasury architecture and what `ITreasuryPort.sendFiat()` calls |
+| 2 | **Is XanePay CAC-registered?** If not, Models B and C are unavailable — MVP must use Model A. | XanePay founders | Determines which NGN model is available at launch |
+| 3 | **What wallet custody solution?** Fireblocks, BitGo, or self-managed HD wallet? | XanePay founders + engineering | Determines Phase 0.5 crypto treasury architecture |
+| 4 | **What is the initial treasury capitalisation?** How much ETH and NGN will XanePay pre-fund at launch? | XanePay finance | Determines replenishment thresholds and Treasury Path availability at launch |
+| 5 | **What is the Treasury Path transaction size limit?** Above what ETH amount does the system always use Provider Path? | XanePay risk team | Routing Engine configuration |
+| 6 | **Does XanePay hold crypto on behalf of users?** Or does crypto always go immediately to the user's external wallet? | XanePay product team | Determines whether `User ETH Wallet` ledger account is needed |
+| 7 | **Which blockchain(s)?** ETH mainnet only, or also Polygon/Base for lower gas? | XanePay product + engineering | On-chain monitoring infrastructure, gas management |
+| 8 | **Who has authority to trigger manual replenishment?** What approval is required for large treasury buys? | XanePay operations | Admin API access controls |
+| 9 | **Regulatory position:** Has legal counsel reviewed holding crypto as operating inventory in this jurisdiction? | XanePay legal | May affect treasury limits and disclosure requirements |
 
 ---
 
