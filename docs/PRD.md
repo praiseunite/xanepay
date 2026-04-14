@@ -663,10 +663,17 @@ These features are designed for and can be activated without architectural chang
 |---|---|---|
 | **Rate Locking (30–60s)** | Lock a quote while user confirms | Redis TTL on quote object — already in architecture |
 | **Multi-Provider Fallback** | Auto-retry on next provider if first fails mid-execution | Already supported by retry + routing engine |
-| **Liquidity Monitoring** | Alert when a provider's balance drops below threshold | New monitoring adapter + alert cron |
-| **Pre-Funded Treasury** | Hold USDT/ETH internally for instant settlement, bypassing provider delay | Treasury wallet adapter + new ledger accounts |
 | **Auto-Routing Optimisation** | Weight routing decisions using live, ML-scored success data | Replace scoring model in Routing Engine |
 | **Real-Time Pricing Engine** | Stream live rates via WebSocket for instant quote display | New pricing adapter + WebSocket gateway |
+
+> [!IMPORTANT]
+> **Treasury & Liquidity** is NO LONGER an optional feature.
+> XanePay controls its own ledger and its own treasury.
+> The Treasury Control Layer — including the internal fiat and crypto treasury,
+> the `ITreasuryPort` interface, and the Replenishment Engine — is a **core
+> architectural component**, not an enhancement.
+>
+> Full specification: [`docs/TREASURY_AND_CUSTODY_MODEL.md`](./TREASURY_AND_CUSTODY_MODEL.md)
 
 ---
 
@@ -692,12 +699,16 @@ These features are designed for and can be activated without architectural chang
 | Component | Configuration |
 |---|---|
 | Fiat PSPs | 2+ with automatic failover |
-| Conversion Providers | 3–5 with weighted smart routing |
-| Routing | Scored multi-provider + ML optimisation |
+| Conversion Providers | 3–5 for treasury replenishment (not primary settlement) |
+| Routing | Treasury Path (primary) + Provider Path (fallback) |
 | Database | Read replicas for reporting queries |
 | Queues | Redis Cluster for distributed jobs |
 | Deployment | Horizontally scaled containers behind load balancer |
-| Treasury | Internal USDT/ETH pre-funded positions |
+| Fiat Treasury | XanePay-controlled NGN settlement account — sweeps from PSPs |
+| Crypto Treasury | XanePay-controlled hot wallet — ETH/USDT inventory |
+| Replenishment Engine | Auto-buys from providers when treasury drops below threshold |
+
+> See [`docs/TREASURY_AND_CUSTODY_MODEL.md`](./TREASURY_AND_CUSTODY_MODEL.md) for full treasury architecture.
 
 ### Adding a Provider at Any Scale
 
