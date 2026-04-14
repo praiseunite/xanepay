@@ -316,30 +316,6 @@ the following is added to the offramp scope:
 > of the two directions because failures here directly affect a
 > user's ability to access their money in fiat.
 
-### Development Only (No Deployment)
-
-| Scope | Estimated Time | Fair Price (USD) | Fair Price (NGN) |
-|---|---|---|---|
-| 1 Conversion Provider + 1 PSP Payout (basic) | 7–10 weeks | $10,000 – $15,000 | ₦7.5M – ₦11M |
-| 2 Conversion Providers + 2 PSPs + Dynamic Registry | 12–14 weeks | $18,000 – $24,000 | ₦13M – ₦17M |
-| Full offramp (all features in this document) | 14–16 weeks | $22,000 – $30,000 | ₦16M – ₦22M |
-
-### Development + Deployment
-
-| Scope | Estimated Time | Fair Price (USD) | Fair Price (NGN) |
-|---|---|---|---|
-| Basic offramp + full infra + on-chain node setup | 12–14 weeks | $16,000 – $22,000 | ₦11M – ₦16M |
-| Full offramp + deployment + monitoring | 16–18 weeks | $26,000 – $38,000 | ₦19M – ₦28M |
-
-### Monthly Retainer (Ongoing Development + Maintenance)
-
-| Engagement | Monthly Rate (USD) | Monthly Rate (NGN) |
-|---|---|---|
-| Development only | $3,500 – $6,000/mo | ₦2.5M – ₦4.4M/mo |
-| Development + deployment + on-call | $5,000 – $8,000/mo | ₦3.7M – ₦5.8M/mo |
-
----
-
 *This document covers the XanePay Offramp Engine scope only.*
 *For Onramp scope and pricing, see: `docs/ONRAMP_REQUIREMENTS.md`*
 *For combined pricing, see: `docs/PRICING_SUMMARY.md`*
