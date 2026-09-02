@@ -58,11 +58,15 @@ Settlement (User Bank / Crypto Wallet)
 
 | Document | Description |
 |---|---|
+| [`docs/DEVELOPER_QUICKSTART.md`](./docs/DEVELOPER_QUICKSTART.md) | **Developer Onboarding Guide** — Local Docker spin-up, PostgreSQL, Redis, and migrations |
+| [`docs/BACKEND_AUDIT_AND_SECURITY_ROADMAP.md`](./docs/BACKEND_AUDIT_AND_SECURITY_ROADMAP.md) | **Backend Security Audit & Gap Analysis** — Vulnerabilities, fixes, and unfinished features |
+| [`docs/AWS_DEPLOYMENT_AND_SECURITY_GUIDE.md`](./docs/AWS_DEPLOYMENT_AND_SECURITY_GUIDE.md) | **AWS Production Deployment & Hardening Guide** — ECS Fargate, RDS, KMS, WAF, CI/CD |
 | [`docs/PRD.md`](./docs/PRD.md) | Full Product Requirements & Architecture Document (v3.0) |
 | [`docs/ONRAMP_REQUIREMENTS.md`](./docs/ONRAMP_REQUIREMENTS.md) | Onramp engine scope, requirements, API surface & pricing |
 | [`docs/OFFRAMP_REQUIREMENTS.md`](./docs/OFFRAMP_REQUIREMENTS.md) | Offramp engine scope, requirements, API surface & pricing |
 | [`docs/PRICING_SUMMARY.md`](./docs/PRICING_SUMMARY.md) | Consolidated pricing for all engagement models |
 | [`docs/IMPLEMENTATION_PLAN.md`](./docs/IMPLEMENTATION_PLAN.md) | Phase-by-phase delivery roadmap |
+
 
 ---
 

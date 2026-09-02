@@ -1,0 +1,43 @@
+name: XanePay Backend CI Quality Gate
+
+on:
+  push:
+    branches: [ staging, staging-backend, main ]
+  pull_request:
+    branches: [ staging, staging-backend, main ]
+
+jobs:
+  test-and-verify:
+    name: Build, Lint & Automated Test Coverage
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./XaneApp
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: './XaneApp/package-lock.json'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: TypeScript Compilation Check
+        run: npm run build
+
+      - name: Run Test Suite with Code Coverage Enforcement
+        run: npm run test:coverage
+        env:
+          NODE_ENV: test
+          JWT_SECRET: test_jwt_super_secret_for_ci_pipeline_only_32_chars
+          DATABASE_PROVIDER: mock
+          RP_ID: localhost
+          RP_NAME: XanePay Wallet
+          CLIENT_URL: http://localhost:3000

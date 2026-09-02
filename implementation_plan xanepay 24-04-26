@@ -1,0 +1,49 @@
+# XanePay Treasury Engine Integration Plan
+
+This document outlines how our proprietary Rust-based Fiat-to-Crypto Treasury Engine will be built and integrated alongside the client's existing `xaneapp-backend`.
+
+## User Review Required
+
+> [!IMPORTANT]  
+> Please review the separation of concerns below. Since you have successfully ring-fenced the "Engine" scope in your legal contract, we must ensure our Rust Engine remains entirely decoupled from their Node.js code. The Engine will be built as a standalone microservice.
+
+## 1. Analysis of the Client's Codebase
+I have scanned the `xaneapp-backend` repository (`src/` and `package.json`). Here is how they are currently building:
+*   **Tech Stack:** Node.js, Express, TypeScript.
+*   **Auth & Wallets:** They are using `Firebase Admin` for traditional authentication and `@web3auth/mpc-core-kit` / Passkeys for non-custodial user wallets.
+*   **Blockchain Comms:** They utilize `ethers.js` directly within their API routes (`swapRoutes.ts`, `contractRoutes.ts`).
+*   **Infrastructure:** They have `ioredis` for caching and are generating Swagger UI documentation.
+
+**What this means:** Their Node.js application is functioning as the **User Application Layer**. It manages the customers, their balances as seen on the app, and their Web3Auth keys.
+
+## 2. Our Scope: The Treasury Settlement Layer
+Based on our previous architectural blueprints, our focus is the **Nostro Treasury Model**. The Rust Engine will sit behind their Node.js application as a secure, high-performance settlement layer.
+
+### Separation of Concerns:
+*   **Node.js (Theirs):** Handles User Logins, KYC status (via Firebase), and user-facing wallet UI. 
+*   **Rust Engine (Ours):** Manages the central treasury pool, executes fiat-to-crypto minting, calculates dynamic network fees, and safeguards the central liquidity contracts.
+
+## 3. Integration Strategy
+We will not write our engine inside their `XaneApp` folder. That would violate the scope separation. Instead, we will build a new service.
+
+1.  **New Workspace:** We will create `c:\Projects\XanePay\xanepay-engine`.
+2.  **Communication Bridge:** 
+    *   Since their Node.js app already runs `ioredis`, we can use **Redis Pub/Sub** or standard **REST APIs** for communication.
+    *   **Flow:** When a user buys crypto on XaneApp, the Node.js backend sends a request to our Rust Engine via an API (e.g., `POST /api/v1/fiat-ramp/execute`). 
+    *   Our engine processes the banking settlement and smart contract minting, then fires a webhook back to Node.js confirming the transaction is settled.
+
+## Proposed Next Steps
+
+### Action 1: Scaffold the Rust Hexagonal Architecture
+Create the standalone `xanepay-engine` Cargo project with our defined ports, adapters, and domain logic cleanly separated from their Node.js repo.
+
+### Action 2: Define the Inter-Service API Contract
+Create a clear OpenAPI spec just for the Engine outlining exactly the 3 or 4 endpoints their Node.js developers will need to call to request crypto liquidity.
+
+### Action 3: Build the Treasury Core
+Implement the core logic we defined in `TREASURY_AND_CUSTODY_MODEL.md` (Nostro Account reconciliation, Liquidity Replenishment logic).
+
+## Open Questions
+
+> [!WARNING]  
+> Are we ready to immediately execute **Action 1** and start writing the Rust engine scaffolding in a new folder alongside `XaneApp`? Or is there any specific file in their Node.js app you want me to inspect deeper before we begin building our side?
