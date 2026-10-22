@@ -69,7 +69,9 @@ something a green unit suite was hiding, so prefer driving the real thing:
 
 ## RULE 3 — Repo conventions
 
-- `XaneApp/` is a **nested git repo**. The engine lives on the **`engine` branch**.
+- `XaneApp/` is a **nested git repo**. The engine lives on the **`staging-consolidated` branch** — it is
+  the sole trunk. (This rule used to say `engine`; that branch is gone. Never merge `frontend` or `main`
+  into it.)
 - Commit and push to **`private`** only. **Never `origin`.**
 - No Claude co-author trailer on commits.
 - `npm run verify` (typecheck → lint → unit → integration) must be clean at every commit.
